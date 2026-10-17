@@ -89,7 +89,7 @@ def train(args, params):
     optimizer.zero_grad()
     with open('weights/step.csv', 'w') as f:
         if args.local_rank == 0:
-            writer = csv.DictWriter(f, fieldnames=['epoch', 'mAP@50', 'mAP'])
+            writer = csv.DictWriter(f, fieldnames=['epoch', 'prec', 'recc', 'mAP@50', 'mAP'])
             writer.writeheader()
         for epoch in range(args.epochs):
             model.train()
@@ -167,8 +167,13 @@ def train(args, params):
                 last = test(args, params, ema.ema)
                 writer.writerow({'mAP': str(f'{last[1]:.3f}'),
                                  'epoch': str(epoch + 1).zfill(3),
-                                 'mAP@50': str(f'{last[0]:.3f}')})
+                                 'mAP@50': str(f'{last[0]:.3f}'),
+                                 'prec': str(f'{last[2]:.3f}'),
+                                 'recc': str(f'{last[3]:.3f}')})
                 f.flush()
+
+                # Show end of epoch stats
+                print(('%10s' * 2 + '%10.4g') % (f'{epoch + 1}/{args.epochs}', memory, m_loss.avg))
 
                 # Update best mAP
                 if last[1] > best:
@@ -282,11 +287,12 @@ def test(args, params, model=None):
         tp, fp, m_pre, m_rec, map50, mean_ap = util.compute_ap(*metrics)
 
     # Print results
-    print('%10.3g' * 3 % (m_pre, m_rec, mean_ap))
+    print("Evaluation:")
+    print('%10.3g' * 4 % (m_pre, m_rec, map50, mean_ap))
 
     # Return results
     model.float()  # for training
-    return map50, mean_ap
+    return map50, mean_ap, m_pre, m_rec
 
 
 def main():

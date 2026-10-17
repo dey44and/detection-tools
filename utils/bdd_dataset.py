@@ -319,7 +319,7 @@ class BDDDataset(Dataset):
         # Filter small bounding boxes only during training
         if self.train:
             transforms_list.append(
-                v2.SanitizeBoundingBoxes(min_size=5.0, min_area=20.0)
+                v2.SanitizeBoundingBoxes(min_size=3.0, min_area=10.0)
             )
 
         transforms_list.extend([
